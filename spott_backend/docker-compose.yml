@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: spott_api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/spott_db
+      - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-this-jwt-secret}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+    volumes:
+      - ./static/uploads:/app/static/uploads
+    depends_on:
+      - mongo
+    networks:
+      - spott_net
+
+  mongo:
+    image: mongo:7.0
+    container_name: spott_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - spott_net
+
+  mongo-express:
+    image: mongo-express:1.0.2
+    container_name: spott_mongo_ui
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: spott123
+    depends_on:
+      - mongo
+    networks:
+      - spott_net
+
+volumes:
+  mongo_data:
+
+networks:
+  spott_net:
+    driver: bridge
